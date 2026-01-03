@@ -11,15 +11,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ItemDto {
     private Long id;
-    
+
     @NotBlank(message = "Name cannot be blank")
     private String name;
-    
+
     @NotBlank(message = "Description cannot be blank")
     private String description;
-    
+
     @NotNull(message = "Available cannot be null")
     private Boolean available;
-    
+
     private Long requestId;
 }

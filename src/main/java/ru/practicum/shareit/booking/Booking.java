@@ -18,11 +18,4 @@ public class Booking {
     private Item item;
     private User booker;
     private BookingStatus status;
-
-    public enum BookingStatus {
-        WAITING,
-        APPROVED,
-        REJECTED,
-        CANCELED
-    }
 }

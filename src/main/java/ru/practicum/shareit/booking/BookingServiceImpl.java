@@ -143,7 +143,7 @@ public class BookingServiceImpl implements BookingService {
         } catch (NotFoundException e) {
             throw new RuntimeException("User not found", e);
         }
-        
+
         List<Booking> bookings;
 
         switch (state) {

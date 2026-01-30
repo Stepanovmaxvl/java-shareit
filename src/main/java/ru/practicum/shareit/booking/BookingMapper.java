@@ -14,16 +14,16 @@ public class BookingMapper {
         dto.setStart(booking.getStart());
         dto.setEnd(booking.getEnd());
         dto.setItemId(booking.getItem().getId());
-        
+
         BookingItemDto itemDto = new BookingItemDto();
         itemDto.setId(booking.getItem().getId());
         itemDto.setName(booking.getItem().getName());
         dto.setItem(itemDto);
-        
+
         BookingUserDto bookerDto = new BookingUserDto();
         bookerDto.setId(booking.getBooker().getId());
         dto.setBooker(bookerDto);
-        
+
         dto.setStatus(booking.getStatus());
         return dto;
     }

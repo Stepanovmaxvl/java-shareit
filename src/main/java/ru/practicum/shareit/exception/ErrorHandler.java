@@ -26,6 +26,14 @@ public class ErrorHandler {
         );
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbiddenException(ForbiddenException e) {
+        return new ResponseEntity<>(
+                new ErrorResponse(e.getMessage()),
+                HttpStatus.FORBIDDEN
+        );
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
         return new ResponseEntity<>(

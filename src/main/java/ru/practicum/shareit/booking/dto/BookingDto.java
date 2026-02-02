@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.shareit.booking.BookingStatus;
+import ru.practicum.shareit.item.dto.ItemShortDto;
+import ru.practicum.shareit.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
 
@@ -27,7 +29,7 @@ public class BookingDto {
     @NotNull(message = "Item ID cannot be null")
     private Long itemId;
 
-    private BookingItemDto item;
-    private BookingUserDto booker;
+    private ItemShortDto item;
+    private UserShortDto booker;
     private BookingStatus status;
 }

@@ -1,12 +1,18 @@
 package ru.practicum.shareit.booking;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.booking.dto.BookingDto;
-import ru.practicum.shareit.booking.dto.BookingItemDto;
-import ru.practicum.shareit.booking.dto.BookingUserDto;
+import ru.practicum.shareit.item.ItemMapper;
+import ru.practicum.shareit.item.dto.ItemShortDto;
+import ru.practicum.shareit.user.UserMapper;
+import ru.practicum.shareit.user.dto.UserShortDto;
 
 @Component
+@RequiredArgsConstructor
 public class BookingMapper {
+    private final ItemMapper itemMapper;
+    private final UserMapper userMapper;
 
     public BookingDto toDto(Booking booking) {
         BookingDto dto = new BookingDto();
@@ -15,17 +21,13 @@ public class BookingMapper {
         dto.setEnd(booking.getEnd());
         dto.setItemId(booking.getItem().getId());
 
-        BookingItemDto itemDto = new BookingItemDto();
-        itemDto.setId(booking.getItem().getId());
-        itemDto.setName(booking.getItem().getName());
+        ItemShortDto itemDto = itemMapper.toShortDto(booking.getItem());
         dto.setItem(itemDto);
 
-        BookingUserDto bookerDto = new BookingUserDto();
-        bookerDto.setId(booking.getBooker().getId());
+        UserShortDto bookerDto = userMapper.toShortDto(booking.getBooker());
         dto.setBooker(bookerDto);
 
         dto.setStatus(booking.getStatus());
         return dto;
     }
 }
-

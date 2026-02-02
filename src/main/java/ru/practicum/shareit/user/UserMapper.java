@@ -2,6 +2,7 @@ package ru.practicum.shareit.user;
 
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.dto.UserShortDto;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,6 +29,10 @@ public class UserMapper {
         user.setName(userDto.getName());
         user.setEmail(userDto.getEmail());
         return user;
+    }
+
+    public UserShortDto toShortDto(User user) {
+        return new UserShortDto(user.getId());
     }
 }
 

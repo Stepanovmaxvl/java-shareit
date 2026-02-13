@@ -94,6 +94,24 @@
 					<version>0.8.12</version>
 					<configuration>
 						<output>file</output>
+						<excludes>
+							<exclude>**/dto/**</exclude>
+							<exclude>**/model/**</exclude>
+							<exclude>**/exception/**</exclude>
+							<exclude>**/config/**</exclude>
+							<exclude>**/ShareItApp.class</exclude>
+							<exclude>**/ShareItGateway.class</exclude>
+							<exclude>**/BaseClient.class</exclude>
+							<exclude>**/BookingStatus.class</exclude>
+							<exclude>**/BookingState.class</exclude>
+							<exclude>**/User.class</exclude>
+							<exclude>**/Booking.class</exclude>
+							<exclude>**/Item.class</exclude>
+							<exclude>**/ItemRequest.class</exclude>
+							<exclude>**/Comment.class</exclude>
+							<exclude>**/*Repository.class</exclude>
+							<exclude>**/*Mapper.class</exclude>
+						</excludes>
 					</configuration>
 					<executions>
 						<execution>

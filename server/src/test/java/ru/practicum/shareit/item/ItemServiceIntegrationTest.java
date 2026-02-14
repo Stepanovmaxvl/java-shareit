@@ -7,12 +7,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.booking.BookingService;
+import ru.practicum.shareit.booking.BookingStatus;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
 import ru.practicum.shareit.user.UserService;
 import ru.practicum.shareit.user.dto.UserDto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -30,6 +35,7 @@ class ItemServiceIntegrationTest {
 
     private final ItemService itemService;
     private final UserService userService;
+    private final BookingService bookingService;
 
     private UserDto user;
 
@@ -111,5 +117,35 @@ class ItemServiceIntegrationTest {
         List<ItemDto> result = itemService.search("");
 
         assertThat(result, empty());
+    }
+
+    @Test
+    void searchItemsNull() {
+        List<ItemDto> result = itemService.search(null);
+
+        assertThat(result, empty());
+    }
+
+    @Test
+    void addCommentNoBooking() {
+        ItemDto created = itemService.create(user.getId(), new ItemDto(null, "Item", "Desc", true, null));
+        UserDto commenter = userService.create(new UserDto(null, "Commenter", "commenter@email.com"));
+
+        CommentDto commentDto = new CommentDto(null, "Great!", null, null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> itemService.addComment(commenter.getId(), created.getId(), commentDto));
+    }
+
+    @Test
+    void getItemByIdAsNonOwner() {
+        ItemDto created = itemService.create(user.getId(), new ItemDto(null, "Item", "Desc", true, null));
+        UserDto otherUser = userService.create(new UserDto(null, "Other", "other@email.com"));
+
+        ItemWithBookingsDto result = itemService.getById(otherUser.getId(), created.getId());
+
+        assertThat(result.getId(), equalTo(created.getId()));
+        assertThat(result.getLastBooking(), equalTo(null));
+        assertThat(result.getNextBooking(), equalTo(null));
     }
 }

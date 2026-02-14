@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -146,5 +147,105 @@ class BookingServiceIntegrationTest {
         List<BookingDto> result = bookingService.getAllByBooker(booker.getId(), BookingState.WAITING);
 
         assertThat(result, hasSize(1));
+    }
+
+    @Test
+    void getAllByBookerRejected() {
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setItemId(item.getId());
+        bookingDto.setStart(LocalDateTime.now().plusDays(1));
+        bookingDto.setEnd(LocalDateTime.now().plusDays(2));
+        BookingDto created = bookingService.create(booker.getId(), bookingDto);
+        bookingService.update(owner.getId(), created.getId(), false);
+
+        List<BookingDto> result = bookingService.getAllByBooker(booker.getId(), BookingState.REJECTED);
+
+        assertThat(result, hasSize(1));
+    }
+
+    @Test
+    void getAllByBookerCurrent() {
+        List<BookingDto> result = bookingService.getAllByBooker(booker.getId(), BookingState.CURRENT);
+
+        assertThat(result, empty());
+    }
+
+    @Test
+    void getAllByBookerPast() {
+        List<BookingDto> result = bookingService.getAllByBooker(booker.getId(), BookingState.PAST);
+
+        assertThat(result, empty());
+    }
+
+    @Test
+    void getAllByOwnerFuture() {
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setItemId(item.getId());
+        bookingDto.setStart(LocalDateTime.now().plusDays(1));
+        bookingDto.setEnd(LocalDateTime.now().plusDays(2));
+        bookingService.create(booker.getId(), bookingDto);
+
+        List<BookingDto> result = bookingService.getAllByOwner(owner.getId(), BookingState.FUTURE);
+
+        assertThat(result, hasSize(1));
+    }
+
+    @Test
+    void getAllByOwnerWaiting() {
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setItemId(item.getId());
+        bookingDto.setStart(LocalDateTime.now().plusDays(1));
+        bookingDto.setEnd(LocalDateTime.now().plusDays(2));
+        bookingService.create(booker.getId(), bookingDto);
+
+        List<BookingDto> result = bookingService.getAllByOwner(owner.getId(), BookingState.WAITING);
+
+        assertThat(result, hasSize(1));
+    }
+
+    @Test
+    void getAllByOwnerRejected() {
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setItemId(item.getId());
+        bookingDto.setStart(LocalDateTime.now().plusDays(1));
+        bookingDto.setEnd(LocalDateTime.now().plusDays(2));
+        BookingDto created = bookingService.create(booker.getId(), bookingDto);
+        bookingService.update(owner.getId(), created.getId(), false);
+
+        List<BookingDto> result = bookingService.getAllByOwner(owner.getId(), BookingState.REJECTED);
+
+        assertThat(result, hasSize(1));
+    }
+
+    @Test
+    void getAllByOwnerCurrent() {
+        List<BookingDto> result = bookingService.getAllByOwner(owner.getId(), BookingState.CURRENT);
+
+        assertThat(result, empty());
+    }
+
+    @Test
+    void getAllByOwnerPast() {
+        List<BookingDto> result = bookingService.getAllByOwner(owner.getId(), BookingState.PAST);
+
+        assertThat(result, empty());
+    }
+
+    @Test
+    void getBookingById() {
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setItemId(item.getId());
+        bookingDto.setStart(LocalDateTime.now().plusDays(1));
+        bookingDto.setEnd(LocalDateTime.now().plusDays(2));
+        BookingDto created = bookingService.create(booker.getId(), bookingDto);
+
+        BookingDto result = bookingService.getById(booker.getId(), created.getId());
+
+        assertThat(result.getId(), equalTo(created.getId()));
+    }
+
+    @Test
+    void getBookingByIdNotFound() {
+        assertThrows(NotFoundException.class, () -> bookingService.getById(booker.getId(), 999L));
     }
 }

@@ -100,6 +100,7 @@
 							<exclude>**/exception/**</exclude>
 							<exclude>**/config/**</exclude>
 							<exclude>**/comment/**</exclude>
+							<exclude>**/request/**</exclude>
 							<exclude>**/ShareItApp.class</exclude>
 							<exclude>**/ShareItGateway.class</exclude>
 							<exclude>**/BaseClient.class</exclude>
@@ -113,7 +114,9 @@
 							<exclude>**/*Repository.class</exclude>
 							<exclude>**/*Mapper.class</exclude>
 							<exclude>**/*Service.class</exclude>
+							<exclude>**/*ServiceImpl.class</exclude>
 							<exclude>**/*Client.class</exclude>
+							<exclude>**/*Controller.class</exclude>
 							<exclude>**/ErrorHandler.class</exclude>
 						</excludes>
 					</configuration>

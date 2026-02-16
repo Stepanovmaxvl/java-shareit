@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.shareit.request.dto.ItemRequestRequestDto;
+import ru.practicum.shareit.request.dto.ItemRequestCreateDto;
 
 @RestController
 @RequestMapping(path = "/requests")
@@ -20,7 +20,7 @@ public class ItemRequestController {
 
     @PostMapping
     public ResponseEntity<Object> create(@RequestHeader("X-Sharer-User-Id") long userId,
-                                         @Valid @RequestBody ItemRequestRequestDto requestDto) {
+                                         @Valid @RequestBody ItemRequestCreateDto requestDto) {
         return itemRequestClient.create(userId, requestDto);
     }
 

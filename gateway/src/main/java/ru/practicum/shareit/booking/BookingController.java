@@ -60,10 +60,7 @@ public class BookingController {
     }
 
     private void validateState(String state) {
-        try {
-            BookingState.valueOf(state.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unknown state: " + state);
-        }
+        BookingState.from(state)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown state: " + state));
     }
 }

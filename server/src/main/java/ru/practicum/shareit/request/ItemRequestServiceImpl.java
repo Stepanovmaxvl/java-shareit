@@ -21,39 +21,30 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     private final ItemRequestRepository itemRequestRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
-    private final ItemRequestMapper itemRequestMapper;
 
     private static final Sort SORT_BY_CREATED_DESC = Sort.by(Sort.Direction.DESC, "created");
-
-    private User getUserOrThrow(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
-    }
-
-    private ItemRequest getRequestOrThrow(Long id) {
-        return itemRequestRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Request with id " + id + " not found"));
-    }
 
     @Override
     public ItemRequestDto create(Long userId, ItemRequestDto dto) {
         User requestor = getUserOrThrow(userId);
-        ItemRequest request = itemRequestMapper.toEntity(dto, requestor);
+        ItemRequest request = ItemRequestMapper.toEntity(dto, requestor);
         ItemRequest savedRequest = itemRequestRepository.save(request);
-        return itemRequestMapper.toDto(savedRequest, Collections.emptyList());
+        return ItemRequestMapper.toDto(savedRequest, Collections.emptyList());
     }
 
     @Override
     public List<ItemRequestDto> getOwn(Long userId) {
         getUserOrThrow(userId);
-        List<ItemRequest> requests = itemRequestRepository.findByRequestorId(userId, SORT_BY_CREATED_DESC);
+        List<ItemRequest> requests = itemRequestRepository.findByRequestorId(
+                userId, SORT_BY_CREATED_DESC);
         return toRequestDtosWithItems(requests);
     }
 
     @Override
     public List<ItemRequestDto> getAll(Long userId) {
         getUserOrThrow(userId);
-        List<ItemRequest> requests = itemRequestRepository.findByRequestorIdNot(userId, SORT_BY_CREATED_DESC);
+        List<ItemRequest> requests = itemRequestRepository.findByRequestorIdNot(
+                userId, SORT_BY_CREATED_DESC);
         return toRequestDtosWithItems(requests);
     }
 
@@ -62,7 +53,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         getUserOrThrow(userId);
         ItemRequest request = getRequestOrThrow(requestId);
         List<Item> items = itemRepository.findByRequestId(requestId);
-        return itemRequestMapper.toDto(request, items);
+        return ItemRequestMapper.toDto(request, items);
     }
 
     private List<ItemRequestDto> toRequestDtosWithItems(List<ItemRequest> requests) {
@@ -70,12 +61,24 @@ public class ItemRequestServiceImpl implements ItemRequestService {
                 .map(ItemRequest::getId)
                 .collect(Collectors.toList());
 
-        Map<Long, List<Item>> itemsByRequest = itemRepository.findByRequestIdIn(requestIds).stream()
+        Map<Long, List<Item>> itemsByRequest = itemRepository
+                .findByRequestIdIn(requestIds).stream()
                 .collect(Collectors.groupingBy(item -> item.getRequest().getId()));
 
         return requests.stream()
-                .map(request -> itemRequestMapper.toDto(request,
+                .map(request -> ItemRequestMapper.toDto(request,
                         itemsByRequest.getOrDefault(request.getId(), Collections.emptyList())))
                 .collect(Collectors.toList());
+    }
+
+    private User getUserOrThrow(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
+    }
+
+    private ItemRequest getRequestOrThrow(Long id) {
+        return itemRequestRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(
+                        "Request with id " + id + " not found"));
     }
 }

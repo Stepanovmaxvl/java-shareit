@@ -12,21 +12,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
-
-    private User getUserOrThrow(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
-    }
 
     @Override
     public UserDto create(UserDto userDto) {
         if (userRepository.existsByEmail(userDto.getEmail())) {
-            throw new ConflictException("User with email " + userDto.getEmail() + " already exists");
+            throw new ConflictException(
+                    "User with email " + userDto.getEmail() + " already exists");
         }
-        User user = userMapper.toEntity(userDto);
+        User user = UserMapper.toEntity(userDto);
         User savedUser = userRepository.save(user);
-        return userMapper.toDto(savedUser);
+        return UserMapper.toDto(savedUser);
     }
 
     @Override
@@ -37,26 +32,27 @@ public class UserServiceImpl implements UserService {
             existingUser.setName(userDto.getName());
         }
         if (userDto.getEmail() != null) {
-            if (userRepository.existsByEmail(userDto.getEmail()) &&
-                    !userDto.getEmail().equals(existingUser.getEmail())) {
-                throw new ConflictException("User with email " + userDto.getEmail() + " already exists");
+            if (userRepository.existsByEmail(userDto.getEmail())
+                    && !userDto.getEmail().equals(existingUser.getEmail())) {
+                throw new ConflictException(
+                        "User with email " + userDto.getEmail() + " already exists");
             }
             existingUser.setEmail(userDto.getEmail());
         }
 
         User updatedUser = userRepository.save(existingUser);
-        return userMapper.toDto(updatedUser);
+        return UserMapper.toDto(updatedUser);
     }
 
     @Override
     public UserDto getById(Long id) {
         User user = getUserOrThrow(id);
-        return userMapper.toDto(user);
+        return UserMapper.toDto(user);
     }
 
     @Override
     public List<UserDto> getAll() {
-        return userMapper.toDto(userRepository.findAll());
+        return UserMapper.toDto(userRepository.findAll());
     }
 
     @Override
@@ -64,5 +60,9 @@ public class UserServiceImpl implements UserService {
         getUserOrThrow(id);
         userRepository.deleteById(id);
     }
-}
 
+    private User getUserOrThrow(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
+    }
+}

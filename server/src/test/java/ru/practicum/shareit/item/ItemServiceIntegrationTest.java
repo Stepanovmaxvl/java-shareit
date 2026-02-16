@@ -1,20 +1,22 @@
 package ru.practicum.shareit.item;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.booking.BookingService;
+import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemWithBookingsDto;
-import ru.practicum.shareit.user.UserService;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.User;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,19 +28,24 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ItemServiceIntegrationTest {
 
-    private final ItemService itemService;
-    private final UserService userService;
-    private final BookingService bookingService;
+    @Autowired
+    private ItemService itemService;
 
-    private UserDto user;
+    @Autowired
+    private EntityManager em;
+
+    private User user;
 
     @BeforeEach
     void setUp() {
-        user = userService.create(new UserDto(null, "User", "user@email.com"));
+        user = new User();
+        user.setName("User");
+        user.setEmail("user@email.com");
+        em.persist(user);
+        em.flush();
     }
 
     @Test
@@ -69,10 +76,15 @@ class ItemServiceIntegrationTest {
         ItemDto itemDto = new ItemDto(null, "Item", "Description", true, null);
         ItemDto created = itemService.create(user.getId(), itemDto);
 
-        UserDto user2 = userService.create(new UserDto(null, "User2", "user2@email.com"));
+        User user2 = new User();
+        user2.setName("User2");
+        user2.setEmail("user2@email.com");
+        em.persist(user2);
+        em.flush();
 
         assertThrows(NotFoundException.class,
-                () -> itemService.update(user2.getId(), created.getId(), new ItemDto(null, "Updated", null, null, null)));
+                () -> itemService.update(user2.getId(), created.getId(),
+                        new ItemDto(null, "Updated", null, null, null)));
     }
 
     @Test
@@ -88,8 +100,10 @@ class ItemServiceIntegrationTest {
 
     @Test
     void getAllByOwner() {
-        itemService.create(user.getId(), new ItemDto(null, "Item1", "Description1", true, null));
-        itemService.create(user.getId(), new ItemDto(null, "Item2", "Description2", true, null));
+        itemService.create(user.getId(),
+                new ItemDto(null, "Item1", "Description1", true, null));
+        itemService.create(user.getId(),
+                new ItemDto(null, "Item2", "Description2", true, null));
 
         List<ItemWithBookingsDto> result = itemService.getAllByOwner(user.getId());
 
@@ -98,8 +112,10 @@ class ItemServiceIntegrationTest {
 
     @Test
     void searchItems() {
-        itemService.create(user.getId(), new ItemDto(null, "Drill", "Electric drill", true, null));
-        itemService.create(user.getId(), new ItemDto(null, "Hammer", "Steel hammer", true, null));
+        itemService.create(user.getId(),
+                new ItemDto(null, "Drill", "Electric drill", true, null));
+        itemService.create(user.getId(),
+                new ItemDto(null, "Hammer", "Steel hammer", true, null));
 
         List<ItemDto> result = itemService.search("drill");
 
@@ -109,7 +125,8 @@ class ItemServiceIntegrationTest {
 
     @Test
     void searchItemsEmptyText() {
-        itemService.create(user.getId(), new ItemDto(null, "Drill", "Electric drill", true, null));
+        itemService.create(user.getId(),
+                new ItemDto(null, "Drill", "Electric drill", true, null));
 
         List<ItemDto> result = itemService.search("");
 
@@ -125,8 +142,14 @@ class ItemServiceIntegrationTest {
 
     @Test
     void addCommentNoBooking() {
-        ItemDto created = itemService.create(user.getId(), new ItemDto(null, "Item", "Desc", true, null));
-        UserDto commenter = userService.create(new UserDto(null, "Commenter", "commenter@email.com"));
+        ItemDto created = itemService.create(user.getId(),
+                new ItemDto(null, "Item", "Desc", true, null));
+
+        User commenter = new User();
+        commenter.setName("Commenter");
+        commenter.setEmail("commenter@email.com");
+        em.persist(commenter);
+        em.flush();
 
         CommentDto commentDto = new CommentDto(null, "Great!", null, null);
 
@@ -135,9 +158,48 @@ class ItemServiceIntegrationTest {
     }
 
     @Test
+    void addCommentWithBooking() {
+        Item item = new Item();
+        item.setName("Item");
+        item.setDescription("Desc");
+        item.setAvailable(true);
+        item.setOwner(user);
+        em.persist(item);
+
+        User commenter = new User();
+        commenter.setName("Commenter");
+        commenter.setEmail("commenter@email.com");
+        em.persist(commenter);
+
+        Booking booking = new Booking();
+        booking.setItem(item);
+        booking.setBooker(commenter);
+        booking.setStart(LocalDateTime.now().minusDays(5));
+        booking.setEnd(LocalDateTime.now().minusDays(3));
+        booking.setStatus(BookingStatus.APPROVED);
+        em.persist(booking);
+
+        em.flush();
+
+        CommentDto commentDto = new CommentDto(null, "Great item!", null, null);
+        CommentDto result = itemService.addComment(
+                commenter.getId(), item.getId(), commentDto);
+
+        assertThat(result.getId(), notNullValue());
+        assertThat(result.getText(), equalTo("Great item!"));
+        assertThat(result.getAuthorName(), equalTo("Commenter"));
+    }
+
+    @Test
     void getItemByIdAsNonOwner() {
-        ItemDto created = itemService.create(user.getId(), new ItemDto(null, "Item", "Desc", true, null));
-        UserDto otherUser = userService.create(new UserDto(null, "Other", "other@email.com"));
+        ItemDto created = itemService.create(user.getId(),
+                new ItemDto(null, "Item", "Desc", true, null));
+
+        User otherUser = new User();
+        otherUser.setName("Other");
+        otherUser.setEmail("other@email.com");
+        em.persist(otherUser);
+        em.flush();
 
         ItemWithBookingsDto result = itemService.getById(otherUser.getId(), created.getId());
 

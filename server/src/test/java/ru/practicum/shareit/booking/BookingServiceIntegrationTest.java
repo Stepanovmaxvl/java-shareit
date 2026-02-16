@@ -1,6 +1,6 @@
 package ru.practicum.shareit.booking;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,11 +9,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingState;
+import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.item.ItemService;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.user.UserService;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,23 +26,39 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class BookingServiceIntegrationTest {
 
-    private final BookingService bookingService;
-    private final ItemService itemService;
-    private final UserService userService;
+    @Autowired
+    private BookingService bookingService;
 
-    private UserDto owner;
-    private UserDto booker;
-    private ItemDto item;
+    @Autowired
+    private EntityManager em;
+
+    private User owner;
+    private User booker;
+    private Item item;
 
     @BeforeEach
     void setUp() {
-        owner = userService.create(new UserDto(null, "Owner", "owner@email.com"));
-        booker = userService.create(new UserDto(null, "Booker", "booker@email.com"));
-        item = itemService.create(owner.getId(), new ItemDto(null, "Item", "Description", true, null));
+        owner = new User();
+        owner.setName("Owner");
+        owner.setEmail("owner@email.com");
+        em.persist(owner);
+
+        booker = new User();
+        booker.setName("Booker");
+        booker.setEmail("booker@email.com");
+        em.persist(booker);
+
+        item = new Item();
+        item.setName("Item");
+        item.setDescription("Description");
+        item.setAvailable(true);
+        item.setOwner(owner);
+        em.persist(item);
+
+        em.flush();
     }
 
     @Test
@@ -68,7 +83,8 @@ class BookingServiceIntegrationTest {
         bookingDto.setStart(LocalDateTime.now().plusDays(1));
         bookingDto.setEnd(LocalDateTime.now().plusDays(2));
 
-        assertThrows(NotFoundException.class, () -> bookingService.create(owner.getId(), bookingDto));
+        assertThrows(ForbiddenException.class,
+                () -> bookingService.create(owner.getId(), bookingDto));
     }
 
     @Test
@@ -144,7 +160,8 @@ class BookingServiceIntegrationTest {
         bookingDto.setEnd(LocalDateTime.now().plusDays(2));
         bookingService.create(booker.getId(), bookingDto);
 
-        List<BookingDto> result = bookingService.getAllByBooker(booker.getId(), BookingState.WAITING);
+        List<BookingDto> result = bookingService.getAllByBooker(
+                booker.getId(), BookingState.WAITING);
 
         assertThat(result, hasSize(1));
     }
@@ -158,14 +175,16 @@ class BookingServiceIntegrationTest {
         BookingDto created = bookingService.create(booker.getId(), bookingDto);
         bookingService.update(owner.getId(), created.getId(), false);
 
-        List<BookingDto> result = bookingService.getAllByBooker(booker.getId(), BookingState.REJECTED);
+        List<BookingDto> result = bookingService.getAllByBooker(
+                booker.getId(), BookingState.REJECTED);
 
         assertThat(result, hasSize(1));
     }
 
     @Test
     void getAllByBookerCurrent() {
-        List<BookingDto> result = bookingService.getAllByBooker(booker.getId(), BookingState.CURRENT);
+        List<BookingDto> result = bookingService.getAllByBooker(
+                booker.getId(), BookingState.CURRENT);
 
         assertThat(result, empty());
     }
@@ -198,7 +217,8 @@ class BookingServiceIntegrationTest {
         bookingDto.setEnd(LocalDateTime.now().plusDays(2));
         bookingService.create(booker.getId(), bookingDto);
 
-        List<BookingDto> result = bookingService.getAllByOwner(owner.getId(), BookingState.WAITING);
+        List<BookingDto> result = bookingService.getAllByOwner(
+                owner.getId(), BookingState.WAITING);
 
         assertThat(result, hasSize(1));
     }
@@ -212,14 +232,16 @@ class BookingServiceIntegrationTest {
         BookingDto created = bookingService.create(booker.getId(), bookingDto);
         bookingService.update(owner.getId(), created.getId(), false);
 
-        List<BookingDto> result = bookingService.getAllByOwner(owner.getId(), BookingState.REJECTED);
+        List<BookingDto> result = bookingService.getAllByOwner(
+                owner.getId(), BookingState.REJECTED);
 
         assertThat(result, hasSize(1));
     }
 
     @Test
     void getAllByOwnerCurrent() {
-        List<BookingDto> result = bookingService.getAllByOwner(owner.getId(), BookingState.CURRENT);
+        List<BookingDto> result = bookingService.getAllByOwner(
+                owner.getId(), BookingState.CURRENT);
 
         assertThat(result, empty());
     }
@@ -246,6 +268,7 @@ class BookingServiceIntegrationTest {
 
     @Test
     void getBookingByIdNotFound() {
-        assertThrows(NotFoundException.class, () -> bookingService.getById(booker.getId(), 999L));
+        assertThrows(NotFoundException.class,
+                () -> bookingService.getById(booker.getId(), 999L));
     }
 }

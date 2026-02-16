@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemRequestRequestDto {
+public class ItemRequestCreateDto {
     @NotBlank(message = "Description cannot be blank")
     private String description;
 }

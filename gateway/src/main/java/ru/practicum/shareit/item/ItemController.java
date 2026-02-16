@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.item.dto.CommentRequestDto;
-import ru.practicum.shareit.item.dto.ItemRequestDto;
+import ru.practicum.shareit.item.dto.ItemCreateDto;
 
 @RestController
 @RequestMapping("/items")
@@ -23,14 +23,14 @@ public class ItemController {
 
     @PostMapping
     public ResponseEntity<Object> create(@RequestHeader("X-Sharer-User-Id") long userId,
-                                         @Valid @RequestBody ItemRequestDto requestDto) {
+                                         @Valid @RequestBody ItemCreateDto requestDto) {
         return itemClient.create(userId, requestDto);
     }
 
     @PatchMapping("/{itemId}")
     public ResponseEntity<Object> update(@RequestHeader("X-Sharer-User-Id") long userId,
                                          @PathVariable long itemId,
-                                         @RequestBody ItemRequestDto requestDto) {
+                                         @RequestBody ItemCreateDto requestDto) {
         return itemClient.update(userId, itemId, requestDto);
     }
 

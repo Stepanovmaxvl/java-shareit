@@ -8,7 +8,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.shareit.BaseClient;
-import ru.practicum.shareit.request.dto.ItemRequestRequestDto;
+import ru.practicum.shareit.request.dto.ItemRequestCreateDto;
 
 @Service
 public class ItemRequestClient extends BaseClient {
@@ -24,7 +24,7 @@ public class ItemRequestClient extends BaseClient {
         );
     }
 
-    public ResponseEntity<Object> create(long userId, ItemRequestRequestDto requestDto) {
+    public ResponseEntity<Object> create(long userId, ItemRequestCreateDto requestDto) {
         return post("", userId, requestDto);
     }
 

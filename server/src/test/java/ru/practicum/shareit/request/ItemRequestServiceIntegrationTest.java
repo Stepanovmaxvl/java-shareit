@@ -1,6 +1,6 @@
 package ru.practicum.shareit.request;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,11 +8,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.item.ItemService;
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
-import ru.practicum.shareit.user.UserService;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.User;
 
 import java.util.List;
 
@@ -25,21 +23,31 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Transactional
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class ItemRequestServiceIntegrationTest {
 
-    private final ItemRequestService itemRequestService;
-    private final UserService userService;
-    private final ItemService itemService;
+    @Autowired
+    private ItemRequestService itemRequestService;
 
-    private UserDto requestor;
-    private UserDto otherUser;
+    @Autowired
+    private EntityManager em;
+
+    private User requestor;
+    private User otherUser;
 
     @BeforeEach
     void setUp() {
-        requestor = userService.create(new UserDto(null, "Requestor", "requestor@email.com"));
-        otherUser = userService.create(new UserDto(null, "Other", "other@email.com"));
+        requestor = new User();
+        requestor.setName("Requestor");
+        requestor.setEmail("requestor@email.com");
+        em.persist(requestor);
+
+        otherUser = new User();
+        otherUser.setName("Other");
+        otherUser.setEmail("other@email.com");
+        em.persist(otherUser);
+
+        em.flush();
     }
 
     @Test
@@ -55,8 +63,10 @@ class ItemRequestServiceIntegrationTest {
 
     @Test
     void getOwnRequests() {
-        itemRequestService.create(requestor.getId(), new ItemRequestDto(null, "Need a drill", null, null));
-        itemRequestService.create(requestor.getId(), new ItemRequestDto(null, "Need a saw", null, null));
+        itemRequestService.create(requestor.getId(),
+                new ItemRequestDto(null, "Need a drill", null, null));
+        itemRequestService.create(requestor.getId(),
+                new ItemRequestDto(null, "Need a saw", null, null));
 
         List<ItemRequestDto> result = itemRequestService.getOwn(requestor.getId());
 
@@ -68,8 +78,16 @@ class ItemRequestServiceIntegrationTest {
         ItemRequestDto request = itemRequestService.create(requestor.getId(),
                 new ItemRequestDto(null, "Need a drill", null, null));
 
-        itemService.create(otherUser.getId(),
-                new ItemDto(null, "Drill", "Electric drill", true, request.getId()));
+        ItemRequest savedRequest = em.find(ItemRequest.class, request.getId());
+
+        Item item = new Item();
+        item.setName("Drill");
+        item.setDescription("Electric drill");
+        item.setAvailable(true);
+        item.setOwner(otherUser);
+        item.setRequest(savedRequest);
+        em.persist(item);
+        em.flush();
 
         List<ItemRequestDto> result = itemRequestService.getOwn(requestor.getId());
 
@@ -80,7 +98,8 @@ class ItemRequestServiceIntegrationTest {
 
     @Test
     void getAllRequests() {
-        itemRequestService.create(requestor.getId(), new ItemRequestDto(null, "Need a drill", null, null));
+        itemRequestService.create(requestor.getId(),
+                new ItemRequestDto(null, "Need a drill", null, null));
 
         List<ItemRequestDto> result = itemRequestService.getAll(otherUser.getId());
 
@@ -90,7 +109,8 @@ class ItemRequestServiceIntegrationTest {
 
     @Test
     void getAllRequestsExcludesOwn() {
-        itemRequestService.create(requestor.getId(), new ItemRequestDto(null, "Need a drill", null, null));
+        itemRequestService.create(requestor.getId(),
+                new ItemRequestDto(null, "Need a drill", null, null));
 
         List<ItemRequestDto> result = itemRequestService.getAll(requestor.getId());
 
@@ -102,7 +122,8 @@ class ItemRequestServiceIntegrationTest {
         ItemRequestDto created = itemRequestService.create(requestor.getId(),
                 new ItemRequestDto(null, "Need a drill", null, null));
 
-        ItemRequestDto result = itemRequestService.getById(otherUser.getId(), created.getId());
+        ItemRequestDto result = itemRequestService.getById(
+                otherUser.getId(), created.getId());
 
         assertThat(result.getId(), equalTo(created.getId()));
         assertThat(result.getDescription(), equalTo("Need a drill"));

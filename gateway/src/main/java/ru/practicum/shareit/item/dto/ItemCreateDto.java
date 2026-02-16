@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemRequestDto {
+public class ItemCreateDto {
     @NotBlank(message = "Name cannot be blank")
     private String name;
 

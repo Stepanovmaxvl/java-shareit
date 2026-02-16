@@ -5,6 +5,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingState;
+import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.model.Item;
@@ -21,33 +22,12 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
-    private final BookingMapper bookingMapper;
 
     private static final Sort SORT_BY_START_DESC = Sort.by(Sort.Direction.DESC, "start");
 
-    private Booking getBookingOrThrow(Long id) {
-        return bookingRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Booking with id " + id + " not found"));
-    }
-
-    private User getUserOrThrow(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
-    }
-
-    private Item getItemOrThrow(Long id) {
-        return itemRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Item with id " + id + " not found"));
-    }
-
     @Override
     public BookingDto create(Long userId, BookingDto bookingDto) {
-        User booker;
-        try {
-            booker = getUserOrThrow(userId);
-        } catch (NotFoundException e) {
-            throw new RuntimeException("User not found", e);
-        }
+        User booker = getUserOrThrow(userId);
         Item item = getItemOrThrow(bookingDto.getItemId());
 
         if (!item.getAvailable()) {
@@ -55,10 +35,11 @@ public class BookingServiceImpl implements BookingService {
         }
 
         if (item.getOwner().getId().equals(userId)) {
-            throw new NotFoundException("Owner cannot book his own item");
+            throw new ForbiddenException("Owner cannot book his own item");
         }
 
-        if (bookingDto.getEnd().isBefore(bookingDto.getStart()) || bookingDto.getEnd().equals(bookingDto.getStart())) {
+        if (bookingDto.getEnd().isBefore(bookingDto.getStart())
+                || bookingDto.getEnd().equals(bookingDto.getStart())) {
             throw new IllegalArgumentException("End date must be after start date");
         }
 
@@ -70,7 +51,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.WAITING);
 
         Booking savedBooking = bookingRepository.save(booking);
-        return bookingMapper.toDto(savedBooking);
+        return BookingMapper.toDto(savedBooking);
     }
 
     @Override
@@ -78,7 +59,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = getBookingOrThrow(bookingId);
 
         if (!booking.getItem().getOwner().getId().equals(userId)) {
-            throw new ru.practicum.shareit.exception.ForbiddenException("Only owner can approve or reject booking");
+            throw new ForbiddenException("Only owner can approve or reject booking");
         }
 
         if (!booking.getStatus().equals(BookingStatus.WAITING)) {
@@ -87,18 +68,19 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
         Booking updatedBooking = bookingRepository.save(booking);
-        return bookingMapper.toDto(updatedBooking);
+        return BookingMapper.toDto(updatedBooking);
     }
 
     @Override
     public BookingDto getById(Long userId, Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
 
-        if (!booking.getBooker().getId().equals(userId) && !booking.getItem().getOwner().getId().equals(userId)) {
+        if (!booking.getBooker().getId().equals(userId)
+                && !booking.getItem().getOwner().getId().equals(userId)) {
             throw new NotFoundException("Only booker or owner can view booking");
         }
 
-        return bookingMapper.toDto(booking);
+        return BookingMapper.toDto(booking);
     }
 
     @Override
@@ -132,18 +114,13 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return bookings.stream()
-                .map(bookingMapper::toDto)
+                .map(BookingMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<BookingDto> getAllByOwner(Long userId, BookingState state) {
-        try {
-            getUserOrThrow(userId);
-        } catch (NotFoundException e) {
-            throw new RuntimeException("User not found", e);
-        }
-
+        getUserOrThrow(userId);
         List<Booking> bookings;
 
         switch (state) {
@@ -172,8 +149,22 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return bookings.stream()
-                .map(bookingMapper::toDto)
+                .map(BookingMapper::toDto)
                 .collect(Collectors.toList());
     }
-}
 
+    private Booking getBookingOrThrow(Long id) {
+        return bookingRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Booking with id " + id + " not found"));
+    }
+
+    private User getUserOrThrow(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
+    }
+
+    private Item getItemOrThrow(Long id) {
+        return itemRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Item with id " + id + " not found"));
+    }
+}

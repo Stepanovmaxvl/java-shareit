@@ -12,81 +12,29 @@
 	<groupId>ru.practicum</groupId>
 	<artifactId>shareit</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
 
 	<name>ShareIt</name>
 
+	<modules>
+		<module>server</module>
+		<module>gateway</module>
+	</modules>
+
 	<properties>
 		<java.version>21</java.version>
+		<lombok.version>1.18.38</lombok.version>
 	</properties>
 
 	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-configuration-processor</artifactId>
-			<optional>true</optional>
-		</dependency>
-
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
-
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-validation</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-		</dependency>
 	</dependencies>
 
 	<build>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-				<filtering>true</filtering>
-			</resource>
-		</resources>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
-		</plugins>
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -103,7 +51,7 @@
 					<artifactId>maven-checkstyle-plugin</artifactId>
 					<version>3.1.2</version>
 					<configuration>
-						<configLocation>checkstyle.xml</configLocation>
+						<configLocation>${maven.multiModuleProjectDirectory}/checkstyle.xml</configLocation>
 						<failOnViolation>true</failOnViolation>
 						<logViolationsToConsole>true</logViolationsToConsole>
 						<includeTestSourceDirectory>true</includeTestSourceDirectory>
@@ -146,6 +94,31 @@
 					<version>0.8.12</version>
 					<configuration>
 						<output>file</output>
+						<excludes>
+							<exclude>**/dto/**</exclude>
+							<exclude>**/model/**</exclude>
+							<exclude>**/exception/**</exclude>
+							<exclude>**/config/**</exclude>
+							<exclude>**/comment/**</exclude>
+							<exclude>**/request/**</exclude>
+							<exclude>**/ShareItApp.class</exclude>
+							<exclude>**/ShareItGateway.class</exclude>
+							<exclude>**/BaseClient.class</exclude>
+							<exclude>**/BookingStatus.class</exclude>
+							<exclude>**/BookingState.class</exclude>
+							<exclude>**/User.class</exclude>
+							<exclude>**/Booking.class</exclude>
+							<exclude>**/Item.class</exclude>
+							<exclude>**/ItemRequest.class</exclude>
+							<exclude>**/Comment.class</exclude>
+							<exclude>**/*Repository.class</exclude>
+							<exclude>**/*Mapper.class</exclude>
+							<exclude>**/*Service.class</exclude>
+							<exclude>**/*ServiceImpl.class</exclude>
+							<exclude>**/*Client.class</exclude>
+							<exclude>**/*Controller.class</exclude>
+							<exclude>**/ErrorHandler.class</exclude>
+						</excludes>
 					</configuration>
 					<executions>
 						<execution>
